@@ -226,7 +226,7 @@ var Body = React.createClass({
 
             <Row className="grid-treetime-row">
                 <p style={{"text-align":"justify"}}>
-                We are sorry for the incovenience and will try to fix the problem as soon as possible.
+                We are sorry for the inconvenience and will try to fix the problem as soon as possible.
                 </p>
             </Row>
 

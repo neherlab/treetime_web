@@ -123,7 +123,7 @@ def get_session_state(userid):
     
 @app.route("/upload/<userid>/file", methods=['GET', 'POST'])
 def upload(userid):
-    
+    from Bio import AlignIO    
     folder = os.path.join(sessions_root, userid)
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -137,8 +137,13 @@ def upload(userid):
             res['TreeFile'] = treefile.filename
         if 'alnfile' in request.files:
             alnfile = request.files['alnfile']
-            alnfile.save(os.path.join(folder, "in_aln.fasta"))
+            tmp_file = os.path.join(folder, "in_aln.fasta")
+            alnfile.save(tmp_file)
             res['AlnFile'] = alnfile.filename
+            try:
+                tmp_aln = AlignIO.read(tmp_file, 'fasta')
+            except: #TODO add biopython alignment error
+                raise IOError("Can't read fasta file -- is this an aligned fasta?")
         if 'metafile' in request.files:
             metafile = request.files['metafile']
             metafile.save(os.path.join(folder, "in_meta.csv"))
