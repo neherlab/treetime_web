@@ -9,7 +9,7 @@ config_dic = {
     "mu":None,  #  #mutations per years per position
     "resolve_poly":True,  # Try to resolve multiple mergers
     "coalescent": False,  # Run the coalescent model (takes care about polytomies resolution)
-    "Tc":0.00,  #  coalescent distance (%difference )
+    "Tc":0.01,  #  coalescent distance (%difference )
     "relax_mu":False,  #  Relax mutation rate? 
     "slack":0.01,  # How much we allow for variation between parents and children 
     "coupling":0.002

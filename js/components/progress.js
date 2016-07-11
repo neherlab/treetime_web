@@ -12,8 +12,7 @@ var Banner = React.createClass({
         return (
             <div>
             <div>
-                <h3>TreeTime is running...</h3>
-                <h4>This may take a while. You will be redirected to the results page when its done</h4>
+                __
             </div>
             </div>
             );

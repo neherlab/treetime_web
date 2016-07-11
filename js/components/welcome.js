@@ -60,7 +60,7 @@ var ShouldReuseBranchLength = React.createClass({
                <Checkbox className="cbox-treetime" id="cbox-treetime-reuse_branches"
                 checked={this.props.AppConfig.reuse_branch_len}
                 onChange={this.handleChange}>
-                Reuse tree branches
+                Use provided branch length for ancestral reconstruction
                 </Checkbox>
             </div>
         );
@@ -92,7 +92,7 @@ var DoReRoot = React.createClass({
                <Checkbox className="cbox-treetime" id="welcome-panel_config-cbox_reroot"
                 checked={this.props.AppConfig.reroot}
                 onChange={this.handleChange}>
-                Optimize tree root position
+                Reroot tree to optimal root
                 </Checkbox>
             </div>
         );
@@ -230,12 +230,12 @@ var UseSlope = React.createClass({
 
               </Checkbox>
               <div className="div-block">
-              <FormControl type="number" className="treetime-input-number div-block"
+              <FormControl type="text" className="treetime-input-number div-block"
                     disabled={!this.props.AppConfig.use_mu}
                     onChange={this.handleTextChange}
                     value={this.props.AppConfig.mu}/>
 
-              <span className="treetime-span-input">(#/year)</span>
+              <span className="treetime-span-input">(mutations/year/site)</span>
               </div>
 
             </div>
@@ -315,15 +315,15 @@ var DoCoalescent = React.createClass({
                            checked={this.props.AppConfig.coalescent}
                            onChange={this.handleCBChange}>
 
-                        Model coalescent process.
+                        Fit coalescent process. 
 
                     </Checkbox>
 
                     <div id="div-block">
 
-                        <span className="treetime-span-input"> Tc = </span>
+                        <span className="treetime-span-input"> Timescale T<sub>c</sub> = </span>
 
-                        <FormControl  type="number" className="treetime-input-number"
+                        <FormControl  type="text" className="treetime-input-number"
                             disabled={!this.props.AppConfig.coalescent}
                             onChange={this.handleTextChange}
                             value={this.props.AppConfig.Tc}/>
@@ -393,7 +393,7 @@ var DoRelaxedClock = React.createClass({
                 <Checkbox className="cbox-treetime" id="welcome_panel_config-cbox_relaxed"
                 checked={this.props.AppConfig.relax_mu}
                 onChange={this.handleCBChange}>
-                    Relax molecular clock
+                    Relaxed molecular clock. Parameters:
                 </Checkbox>
 
                 <div className="div-block">
@@ -416,7 +416,7 @@ var DoRelaxedClock = React.createClass({
                     </span>
 
                     <FormControl className="treetime-input-number"
-                        type= "number"
+                        type= "text"
                         disabled={!this.props.AppConfig.relax_mu}
                         onChange={this.handleAChange}
                         value={this.props.AppConfig.coupling}/>
@@ -558,6 +558,7 @@ var TreeTimeForm = React.createClass({
         //}
 
         this.setAppState({tree_file:true});
+        this.SetAppConfig({"do_build_tree":false})
         request.post('/upload/' + this.state.UID + '/file')
             .send(formData)
             .end(this.on_upload_tree);
@@ -700,7 +701,7 @@ var TreeTimeForm = React.createClass({
                                     id="welcome_col_upload_tree" className="grid-treetime-col-right" >
 
                                     <span className="btn btn-primary btn-file btn-file-treetime" id="btn-1">
-                                        Newick <input  type="file" disabled={this.state.config.do_build_tree}  onChange={this.uploadTreeFile} />
+                                        Newick <input  type="file" onChange={this.uploadTreeFile} />
                                     </span>
 
                                     {this.state.tree_filename}
@@ -761,6 +762,10 @@ var TreeTimeForm = React.createClass({
 
                     <Panel collapsible defaultCollapsed header="Advanced configuration" className="panel-treetime" id="welcome_panel_config">
 
+                        <GTRmodel
+                            AppConfig={this.state.config}
+                            SetAppConfig={this.SetAppConfig}/>
+
                         <ShouldReuseBranchLength
                             AppConfig={this.state.config}
                             SetAppConfig={this.SetAppConfig}/>
@@ -768,11 +773,6 @@ var TreeTimeForm = React.createClass({
                         <DoReRoot
                             AppConfig={this.state.config}
                             SetAppConfig={this.SetAppConfig}/>
-
-                        <GTRmodel
-                            AppConfig={this.state.config}
-                            SetAppConfig={this.SetAppConfig}/>
-
 
                         <UseSlope
                             AppConfig={this.state.config}

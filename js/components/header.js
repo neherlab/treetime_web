@@ -24,7 +24,7 @@ var Name = React.createClass({
             <div id='name'>
             <h1>TreeTime </h1>
             <div className="spacer"></div>
-            <h4>Maximum likelihood Inference molecular clock phylogenies</h4>
+            <h4>Maximum likelihood molecular clock phylogenies</h4>
             </div>
         );
     }
