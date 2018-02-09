@@ -124,11 +124,12 @@ def upload_treetime_file(userid):
     
     def _check_sequences(tree, aln):
         """
-        Check that all tree leaves have sequences in the alignment. 
+        Check that there are sequences in the alignment for all given tree leaves. 
         
         Returns:
             - True if the validation successful, 
-            otherwise False and the text message containing the error or warning.
+            otherwise False + the text message containing the error or warning.
+            The text message will be then transferred to the user interface 
         """
         n_missing_seqs = 0
         # alignment should be already checked 
