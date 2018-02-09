@@ -539,10 +539,17 @@ var WelcomeTreeTimePage = React.createClass({
             return;
         }
 
-        this.setState({
-            tree_filename:JSON.parse(res.text).TreeFile,
-            tree_file:true
-        })
+        var response = JSON.parse(res.text)
+        if (response.UploadFile == "Error"){
+            this.setAppState({tree_file:false, tree_filename: "Error uploading file"});
+            alert(response.Error);
+        }else{
+            this.setState({
+                tree_filename:response.TreeFile,
+                tree_file:true
+            })
+        }
+    
     },
 
 

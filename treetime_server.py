@@ -4,7 +4,7 @@ from werkzeug import secure_filename
 import threading
 import numpy as np
 import os, random, subprocess, json, shutil
-from Bio import Phylo
+from Bio import Phylo, AlignIO
 import os,sys
 import StringIO
 
@@ -121,6 +121,72 @@ def upload_treetime_file(userid):
     (alignment, tree or metadata file), and stores it in the 'sessions/<userid>'
     folder.
     """
+    
+    def _check_sequences(tree, aln):
+        """
+        Check that all tree leaves have sequences in the alignment. 
+        
+        Returns:
+            - True if the validation successful, 
+            otherwise False and the text message containing the error or warning.
+        """
+        n_missing_seqs = 0
+        # alignment should be already checked 
+        try:
+            
+            alnNames = [k.name for k in aln]
+            for term in tree.get_terminals():
+                if term.name not in alnNames: 
+                   n_missing_seqs += 1
+            if n_missing_seqs > 0:
+                return False, "Tree does not fit the alignment.\n"\
+                "Alignment has no sequences for {} out of {} tree leaves.\n"\
+                "Double-check the tree and alignment inputs.".format(n_missing_seqs, len(tree.get_terminals()))
+            
+            else: return True, None
+        
+        except Exception as e:
+            return False, "Exception caught. Message:\n{}".format(e.message)
+    
+
+    def _check_tree(tree_dest, aln_dest):
+        """
+        Check whether user uploads a good tree.
+            - newick format
+            - can be recognized by Bio.Phylo reader (default reader of the TreeTime) 
+            - if the alignment present -> check all sequences correspond 
+
+        Returns:
+            - True if the validation successful, 
+            otherwise False and the text message containing the error or warning.
+        
+        """
+
+        # can read tree? 
+        try:
+
+            tt = Phylo.read (tree_dest, 'newick')
+            # For some types of the non-newick files, incl. fasta, Biopython parser 
+            #  assumes there is only one tip in the tree. We need to catch this situation as well
+            if (len(tt.get_terminals())) == 1:
+                raise Exception("Tree contains only one node. Are you sure the input file has proper format?")
+            elif tt.total_branch_length() == 0:
+                raise Exception("Total branch length is zero. Are you sure the input file has proper format?")
+
+        except Exception as e:
+            return False, "Cannot parse tree file. Check it is in newick format.\n{}".format(e.message)
+            
+        # if  there is an alignment file, check sequences
+        if os.path.exists(aln_dest):
+            # note that if the alignment file is there, it should be checked
+            aln = AlignIO.read(aln_dest, 'fasta')
+            seqres, seqmsg = _check_sequences(tt, aln)
+        else:
+            seqres, seqmsg = True, None
+
+        return seqres, seqmsg
+
+
     # define the destination folder
     folder = os.path.join(sessions_root, userid)
     if not os.path.exists(folder):
@@ -128,23 +194,43 @@ def upload_treetime_file(userid):
 
 
     if request.method == 'POST':
+        
+        tree_dest = os.path.join(folder, "in_tree.nwk")
+        aln_dest = os.path.join(folder, "in_aln.fasta")
+        csv_dest = os.path.join(folder, "in_meta.csv")
+        
         res = {}
+        
         # todo validate the content of uploaded files
         # switch filetype and save files under unified names
         if 'treefile' in request.files:
             treefile = request.files['treefile']
-            treefile.save(os.path.join(folder, "in_tree.nwk"))
-            res['TreeFile'] = treefile.filename
-        if 'alnfile' in request.files:
-            alnfile = request.files['alnfile']
-            alnfile.save(os.path.join(folder, "in_aln.fasta"))
-            res['AlnFile'] = alnfile.filename
-        if 'metafile' in request.files:
-            metafile = request.files['metafile']
-            metafile.save(os.path.join(folder, "in_meta.csv"))
-            res['MetaFile'] = metafile.filename
+            treefile.save(tree_dest)
+            treeres, treemsg = _check_tree(tree_dest, aln_dest)
+            print ("Input tree checked: {}, {}".format(treeres, treemsg))
+            if not treeres:
+                res["UploadFile"] = "Error"
+                res['Error'] = treemsg
+                # delete BAD tree file:
+                os.remove(tree_dest)
+            else:
+                res["UploadFile"] = "OK"
 
-        res["UploadFile"] = "OK"
+            # import ipdb; ipdb.set_trace();
+            res['TreeFile'] = treefile.filename
+        
+        elif 'alnfile' in request.files:
+            alnfile = request.files['alnfile']
+            alnfile.save(aln_dest)
+            res['AlnFile'] = alnfile.filename
+            res["UploadFile"] = "OK"
+        
+        elif 'metafile' in request.files:
+            metafile = request.files['metafile']
+            metafile.save(csv_dest)
+            res['MetaFile'] = metafile.filename
+            res["UploadFile"] = "OK"
+
 
         return jsonify(**res)
 
