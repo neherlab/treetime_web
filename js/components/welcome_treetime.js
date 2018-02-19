@@ -578,7 +578,20 @@ var WelcomeTreeTimePage = React.createClass({
             alert("Alignment file upload error. Please, try once more.")
             return;
         }
-        this.setState({aln_filename:JSON.parse(res.text).AlnFile, aln_file:true})
+        
+
+        var response = JSON.parse(res.text)
+        if (response.UploadFile == "Error"){
+            this.setAppState({aln_file:false, aln_filename: "Error uploading file"});
+            alert(response.Error);
+        }else{
+            this.setState({
+                aln_filename:response.AlnFile,
+                aln_file:true
+            })
+        }
+
+        //this.setState({aln_filename:JSON.parse(res.text).AlnFile, aln_file:true})
 
     },
 

@@ -158,8 +158,8 @@ def upload_treetime_file(userid):
             - if the alignment present -> check all sequences correspond 
 
         Returns:
-            - True if the validation successful, 
-            otherwise False and the text message containing the error or warning.
+            - True,None if the validation successful, 
+            otherwise False, the text message containing the error.
         
         """
 
@@ -187,6 +187,33 @@ def upload_treetime_file(userid):
 
         return seqres, seqmsg
 
+    def _check_alignment(tree_dest, aln_dest):
+        """
+        Validate the input alignemnt.
+        1. Check if we can read and parse the sequences from the alignment.
+        2. If the tree is already uploaded, check that the alignment contains 
+        sequences for all tree leaves
+
+        Returns:
+            - True,None if the validation successful, 
+            otherwise False, the text message containing the error.
+        """
+        try:
+            aln = AlignIO.read(aln_dest, 'fasta')
+        except Exception as e:
+            return False, "Cannot parse multiple sequence alignment. Error message:\n{}".format(e.message)
+
+        # if  there is an alignment file, check sequences
+        if os.path.exists(tree_dest):
+            # note that if the tree  file is there, it should be checked, hence 
+            # we can read it without additional validation
+            tt = Phylo.read(tree_dest, 'newick')
+            res, msg = _check_sequences(tt, aln)
+        else:
+            res, msg = True, None
+        return res, msg
+
+
 
     # define the destination folder
     folder = os.path.join(sessions_root, userid)
@@ -213,19 +240,27 @@ def upload_treetime_file(userid):
                 res["UploadFile"] = "Error"
                 res['Error'] = treemsg
                 # delete BAD tree file:
+                res['TreeFile'] = None
                 os.remove(tree_dest)
             else:
+                res['TreeFile'] = treefile.filename
                 res["UploadFile"] = "OK"
-
-            # import ipdb; ipdb.set_trace();
-            res['TreeFile'] = treefile.filename
         
         elif 'alnfile' in request.files:
             alnfile = request.files['alnfile']
             alnfile.save(aln_dest)
-            res['AlnFile'] = alnfile.filename
-            res["UploadFile"] = "OK"
-        
+            alnres, alnmsg = _check_alignment(tree_dest, aln_dest)
+            print ("Input alignment checked: {}, {}".format(alnres, alnmsg))
+            if not alnres:
+                res["UploadFile"] = "Error"
+                res['Error'] = alnmsg
+                # delete BAD tree file:
+                res['AlnFile'] = None
+                os.remove(aln_dest)
+            else:
+                res['AlnFile'] = alnfile.filename
+                res["UploadFile"] = "OK"
+
         elif 'metafile' in request.files:
             metafile = request.files['metafile']
             metafile.save(csv_dest)
